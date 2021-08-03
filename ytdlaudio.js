@@ -122,7 +122,7 @@ async function doQuestion(question, checkRepeat) {
 	// ***********************************************************
 	// Preparo carpeta out
 	// ***********************************************************
-	const outDir = `./out/${outFolderName}`;
+	const outDir = `./${outFolderName}`;
 	if (! fs.existsSync(outDir)) fs.mkdirSync(outDir, {recursive: true});	
 	
 	

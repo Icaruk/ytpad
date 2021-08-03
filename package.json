@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"pkg": "pkg --targets node14-win --compress Gzip --output build/ytdlaudio.exe ytdlaudio.js"
+		"pkg": "pkg --targets node14-win --compress Gzip --output build/pkg.exe index.js",
+		"postpkg": "node postpkg.js"
 	},
 	"repository": {
 		"type": "git",

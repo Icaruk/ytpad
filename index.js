@@ -39,17 +39,37 @@ async function doQuestion(question, checkRepeat) {
 (async() => {
 	
 	// ***********************************************************
+	// Intro
+	// ***********************************************************
+	
+	console.log(`
+                                                                
+8b        d8  888888888888  88888888ba      db         88888888ba,    
+ Y8,    ,8P        88       88      "8b    d88b        88      \`"8b   
+  Y8,  ,8P         88       88      ,8P   d8'\`8b       88        \`8b  
+   "8aa8"          88       88aaaaaa8P'  d8'  \`8b      88         88  
+    \`88'           88       88""""""'   d8YaaaaY8b     88         88  
+     88            88       88         d8""""""""8b    88         8P  
+     88            88       88        d8'        \`8b   88      .a8P   
+     88            88       88       d8'          \`8b  88888888Y"'    
+
+  By: Icaruk
+	`);
+	
+	
+	
+	// ***********************************************************
 	// Link
 	// ***********************************************************
 	
-	let link = await doQuestion(chalk.cyan("\n[1/3] Escribe el link o id de la playlist >>> "), res => !res);
+	let link = await doQuestion(chalk.cyan("[1/3] Playlist link/id >>> "), res => !res);
 	link = link.trim();
 	
 	let playlistId;
 	
 	if (link.includes("?list=")) { // https://www.youtube.com/playlist?list=PLt7bG0K25iXj49pWeyf3A8H-9TGWq1oTB
 		playlistId = link.split("?list=")[1];
-		console.log( `    ID de la playlist detectada:    ${playlistId}` );
+		console.log( `    Playlist ID:    ${playlistId}` );
 	} else {
 		playlistId = link;
 	};
@@ -61,9 +81,9 @@ async function doQuestion(question, checkRepeat) {
 	// Limit
 	// ***********************************************************
 	
-	let limit = +await doQuestion(chalk.cyan("\n[2/3] Escribe cuántos ítems quieres descargar (escribe 0 para no poner límite) >>> "), res => {
+	let limit = +await doQuestion(chalk.cyan("\n[2/3] Number of items to download (write 0 for unlimited) >>> "), res => {
 		if ( Number.isNaN(parseInt(res)) ) {
-			console.log("Número no válido");
+			console.log("Invalid number");
 			return true;
 		};
 		
@@ -80,7 +100,7 @@ async function doQuestion(question, checkRepeat) {
 	// Nombre carpeta
 	// ***********************************************************
 	
-	let outFolderName = await doQuestion(chalk.cyan("\n[3/3] Escribe el nombre de la carpeta de salida (pulsa intro para omitir) >>> "))
+	let outFolderName = await doQuestion(chalk.cyan("\n[3/3] Output folder name (press enter to skip) >>> "))
 	if (!outFolderName) outFolderName = playlistId;
 	
 	
@@ -89,7 +109,7 @@ async function doQuestion(question, checkRepeat) {
 	// Obtengo ítems de la playlist
 	// ***********************************************************
 	
-	console.log( chalk.yellow("\nObteniendo ítems de la playlist...") );
+	console.log( chalk.yellow("\nGetting playlist items...") );
 	
 	// const playlistId = "PLd-AUhUZLc2lsbl0DOz0CKOv6AS75vfjf"; // fr
 	// const playlistId = "PLd-AUhUZLc2mPtFqzCRQMu5ebO9vRbxZ6"; // colores
@@ -106,12 +126,12 @@ async function doQuestion(question, checkRepeat) {
 		playlistItems = playlist.items;
 		totalItems = playlistItems.length;
 		
-		console.log( `    ${totalItems} ítems encontrados.` );
+		console.log( `    ${totalItems} items found.` );
 		
 	} catch (err) {
 		
-		console.log( chalk.red("Playlist no encontrada.") );
-		await doQuestion( chalk.cyan("Pulsa intro para salir...") );
+		console.log( chalk.red("Playlist not found.") );
+		await doQuestion( chalk.cyan("Press enter to exit...") );
 		process.exit();	
 			
 	};
@@ -131,8 +151,8 @@ async function doQuestion(question, checkRepeat) {
 	// Descarga
 	// ***********************************************************
 	
-	console.log( chalk.yellow("\nDescargando...") );
-	console.log( chalk.magentaBright("Puede que algún ítem tarde más de lo esperado. Si tarda demasiado, reiniciar el proceso.") );
+	console.log( chalk.yellow("\nDownloading...") );
+	console.log( chalk.magentaBright("Some items could take more time than expected. If it takes too long restart the process.") );
 	
 	
 	
@@ -152,7 +172,7 @@ async function doQuestion(question, checkRepeat) {
 		
 		
 		if (!_x.isPlayable) {
-			console.log( `    [ERR] ${_x.title} no está disponible.` );
+			console.log( `    [ERR] ${_x.title} is unavailable.` );
 			continue;
 		};
 		
@@ -170,10 +190,10 @@ async function doQuestion(question, checkRepeat) {
 			procesados ++;
 			
 			if (procesados > totalItems) {
-				if (fallados.length > 0) console.log( chalk.red(`Han quedado ${fallados.length} por descargar`) );
-				else console.log( chalk.green("Todo descargado") );
+				if (fallados.length > 0) console.log( chalk.red(`There are ${fallados.length} missing downloads.`) );
+				else console.log( chalk.green("All items have been downloaded") );
 				
-				await doQuestion( chalk.cyan("Pulsa intro para salir...") );
+				await doQuestion( chalk.cyan("Press enter to exit...") );
 				process.exit();
 				
 			};				

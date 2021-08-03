@@ -92,7 +92,7 @@ async function doQuestion(question, checkRepeat) {
 	
 	
 	if (limit <= 0) limit = Infinity;
-	console.log( `    Límite: ${limit}` );
+	console.log( `    Limit: ${limit}` );
 	
 	
 	

@@ -1,10 +1,11 @@
 
 
-const { once } = require("events");
 const fs = require("fs");
 const readline = require('readline');
 const ytdl = require('ytdl-core');
 var ytpl = require('ytpl');
+const chalk = require('chalk');
+
 
 
 const rl = readline.createInterface({
@@ -41,7 +42,7 @@ async function doQuestion(question, checkRepeat) {
 	// Link
 	// ***********************************************************
 	
-	let link = await doQuestion("\n[1/3] Escribe el link o id de la playlist >>> ", res => !res);
+	let link = await doQuestion(chalk.cyan("\n[1/3] Escribe el link o id de la playlist >>> "), res => !res);
 	link = link.trim();
 	
 	let playlistId;
@@ -60,8 +61,8 @@ async function doQuestion(question, checkRepeat) {
 	// Limit
 	// ***********************************************************
 	
-	let limit = +await doQuestion("\n[2/3] Escribe cuántos ítems quieres descargar (pulsa intro para no poner límite) >>> ", res => {
-		if ( Number.isNaN(parseInt(res)) && res !== "" ) {
+	let limit = +await doQuestion(chalk.cyan("\n[2/3] Escribe cuántos ítems quieres descargar (escribe 0 para no poner límite) >>> "), res => {
+		if ( Number.isNaN(parseInt(res)) ) {
 			console.log("Número no válido");
 			return true;
 		};
@@ -70,7 +71,7 @@ async function doQuestion(question, checkRepeat) {
 	})
 	
 	
-	if (!limit) limit = Infinity;
+	if (limit <= 0) limit = Infinity;
 	console.log( `    Límite: ${limit}` );
 	
 	
@@ -79,7 +80,7 @@ async function doQuestion(question, checkRepeat) {
 	// Nombre carpeta
 	// ***********************************************************
 	
-	let outFolderName = await doQuestion("\n[3/3] Escribe el nombre de la carpeta de salida (pulsa intro para omitir) >>> ")
+	let outFolderName = await doQuestion(chalk.cyan("\n[3/3] Escribe el nombre de la carpeta de salida (pulsa intro para omitir) >>> "))
 	if (!outFolderName) outFolderName = playlistId;
 	
 	
@@ -88,18 +89,33 @@ async function doQuestion(question, checkRepeat) {
 	// Obtengo ítems de la playlist
 	// ***********************************************************
 	
-	console.log( "\n*** Obteniendo ítems de la playlist..." );
+	console.log( chalk.yellow("\nObteniendo ítems de la playlist...") );
 	
 	// const playlistId = "PLd-AUhUZLc2lsbl0DOz0CKOv6AS75vfjf"; // fr
 	// const playlistId = "PLd-AUhUZLc2mPtFqzCRQMu5ebO9vRbxZ6"; // colores
 	
-	const playlist = await ytpl(playlistId, {
-		limit: limit,
-	});
-	const playlistItems = playlist.items;
-	const totalItems = playlistItems.length;
+	let playlist;
+	let playlistItems;
+	let totalItems;
 	
-	console.log( `    ${totalItems} ítems encontrados.` );
+	try {
+		
+		playlist = await ytpl(playlistId, {
+			limit: limit,
+		});
+		playlistItems = playlist.items;
+		totalItems = playlistItems.length;
+		
+		console.log( `    ${totalItems} ítems encontrados.` );
+		
+	} catch (err) {
+		
+		console.log( chalk.red("Playlist no encontrada.") );
+		await doQuestion( chalk.cyan("Pulsa intro para salir...") );
+		process.exit();	
+			
+	};
+	
 	
 	
 	
@@ -115,7 +131,8 @@ async function doQuestion(question, checkRepeat) {
 	// Descarga
 	// ***********************************************************
 	
-	console.log( "\n*** Descargando..." );
+	console.log( chalk.yellow("\nDescargando...") );
+	console.log( chalk.magentaBright("Puede que algún ítem tarde más de lo esperado. Si tarda demasiado, reiniciar el proceso.") );
 	
 	
 	
@@ -153,10 +170,12 @@ async function doQuestion(question, checkRepeat) {
 			procesados ++;
 			
 			if (procesados > totalItems) {
-				if (fallados.length > 0) console.log(`Han quedado ${fallados.length} por descargar`);
-				else console.log( "*** Todo descargado" );
+				if (fallados.length > 0) console.log( chalk.red(`Han quedado ${fallados.length} por descargar`) );
+				else console.log( chalk.green("Todo descargado") );
 				
-				await doQuestion("Pulsa intro para salir");
+				await doQuestion( chalk.cyan("Pulsa intro para salir...") );
+				process.exit();
+				
 			};				
 			
 		})

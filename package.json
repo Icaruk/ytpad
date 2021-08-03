@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pkg": "pkg --targets node14-win --compress Gzip ytdlaudio.js"
   },
   "repository": {
     "type": "git",
@@ -18,10 +18,6 @@
   },
   "homepage": "https://github.com/Icaruk/ytdlaudio#readme",
   "dependencies": {
-    "fluent-ffmpeg": "^2.1.2",
-    "googleapis": "^83.0.0",
-    "playwright": "^1.13.1",
-    "usetube": "^2.1.1",
     "youtube-audio-stream": "^0.3.7",
     "ytdl-core": "^4.9.0",
     "ytpl": "^2.2.1"

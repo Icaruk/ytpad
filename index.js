@@ -3,7 +3,7 @@
 const fs = require("fs");
 const readline = require('readline');
 const ytdl = require('ytdl-core');
-var ytpl = require('ytpl');
+const ytpl = require('ytpl');
 const chalk = require('chalk');
 
 

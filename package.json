@@ -1,5 +1,5 @@
 {
-	"name": "ytdlaudio",
+	"name": "ytpad",
 	"version": "1.0.0",
 	"description": "",
 	"main": "index.js",
@@ -9,15 +9,15 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Icaruk/ytdlaudio.git"
+		"url": "git+https://github.com/Icaruk/ytpad.git"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"bugs": {
-		"url": "https://github.com/Icaruk/ytdlaudio/issues"
+		"url": "https://github.com/Icaruk/ytpad/issues"
 	},
-	"homepage": "https://github.com/Icaruk/ytdlaudio#readme",
+	"homepage": "https://github.com/Icaruk/ytpad#readme",
 	"dependencies": {
 		"chalk": "^4.1.2",
 		"ytdl-core": "^4.9.0",

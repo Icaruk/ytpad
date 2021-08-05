@@ -22,5 +22,8 @@
 		"chalk": "^4.1.2",
 		"ytdl-core": "^4.9.1",
 		"ytpl": "^2.2.3"
+	},
+	"devDependencies": {
+		"adm-zip": "^0.5.5"
 	}
 }

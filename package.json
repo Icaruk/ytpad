@@ -20,7 +20,7 @@
 	"homepage": "https://github.com/Icaruk/ytpad#readme",
 	"dependencies": {
 		"chalk": "^4.1.2",
-		"ytdl-core": "^4.9.0",
-		"ytpl": "^2.2.1"
+		"ytdl-core": "^4.9.1",
+		"ytpl": "^2.2.3"
 	}
 }

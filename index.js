@@ -14,6 +14,7 @@ const rl = readline.createInterface({
 });
 
 
+
 async function doQuestion(question, checkRepeat) {
 	
 	const response = await new Promise( resolve => {
@@ -34,7 +35,7 @@ async function doQuestion(question, checkRepeat) {
 	
 };
 
-  
+
 
 (async() => {
 	
@@ -59,21 +60,37 @@ async function doQuestion(question, checkRepeat) {
 	
 	
 	// ***********************************************************
+	// Tipo
+	// ***********************************************************
+	
+	/** @type {1 | 2} Options are: (1) Playlist. (2) Video */
+	let type = +await doQuestion(chalk.green.bold("\nType of download:\n  1: Playlist\n  2: Video\n  Write 1 or 2 >>> "), res => {
+		if ( ![1, 2].includes(+res) ) {
+			console.log("Options available are 1 or 2.");
+			return true;
+		};
+		
+		return false;
+	});
+	
+	
+	
+	// ***********************************************************
 	// Link
 	// ***********************************************************
 	
-	let link = await doQuestion(chalk.cyan("[1/3] Playlist link/id >>> "), res => !res);
+	let link = await doQuestion(chalk.green.bold("\nLink/id >>> "), res => !res);
 	link = link.trim();
 	
 	let playlistId;
+	const queryId = type === 1 ? "?list=" : "watch?v=";
 	
-	if (link.includes("?list=")) { // https://www.youtube.com/playlist?list=PLt7bG0K25iXj49pWeyf3A8H-9TGWq1oTB
-		playlistId = link.split("?list=")[1];
-		console.log( `    Playlist ID:    ${playlistId}` );
+	if (link.includes(queryId)) { // https://www.youtube.com/playlist?list=PLt7bG0K25iXj49pWeyf3A8H-9TGWq1oTB
+		playlistId = link.split(queryId)[1];
+		console.log( `    ID:    ${playlistId}` );
 	} else {
 		playlistId = link;
 	};
-	
 	
 	
 	
@@ -81,18 +98,24 @@ async function doQuestion(question, checkRepeat) {
 	// Limit
 	// ***********************************************************
 	
-	let limit = +await doQuestion(chalk.cyan("\n[2/3] Number of items to download (write 0 for unlimited) >>> "), res => {
-		if ( Number.isNaN(parseInt(res)) ) {
-			console.log("Invalid number");
-			return true;
-		};
+	let limit = 0;
+	
+	if (type === 1) {
 		
-		return false;
-	})
-	
-	
-	if (limit <= 0) limit = Infinity;
-	console.log( `    Limit: ${limit}` );
+		limit = +await doQuestion(chalk.green.bold("\nNumber of items to download (write 0 for unlimited) >>> "), res => {
+			if ( Number.isNaN(parseInt(res)) ) {
+				console.log("Invalid number");
+				return true;
+			};
+			
+			return false;
+		})
+		
+		
+		if (limit <= 0) limit = Infinity;
+		console.log( `    Limit: ${limit}` );
+		
+	};
 	
 	
 	
@@ -100,7 +123,7 @@ async function doQuestion(question, checkRepeat) {
 	// Nombre carpeta
 	// ***********************************************************
 	
-	let outFolderName = await doQuestion(chalk.cyan("\n[3/3] Output folder name (press enter to skip) >>> "))
+	let outFolderName = await doQuestion(chalk.green.bold("\nOutput folder name (press enter to skip) >>> "))
 	if (!outFolderName) outFolderName = playlistId;
 	
 	
@@ -109,33 +132,42 @@ async function doQuestion(question, checkRepeat) {
 	// Obtengo ítems de la playlist
 	// ***********************************************************
 	
-	console.log( chalk.yellow("\nGetting playlist items...") );
-	
-	// const playlistId = "PLd-AUhUZLc2lsbl0DOz0CKOv6AS75vfjf"; // fr
-	// const playlistId = "PLd-AUhUZLc2mPtFqzCRQMu5ebO9vRbxZ6"; // colores
-	
-	let playlist;
 	let playlistItems;
 	let totalItems;
 	
-	try {
-		
-		playlist = await ytpl(playlistId, {
-			limit: limit,
-		});
-		playlistItems = playlist.items;
-		totalItems = playlistItems.length;
-		
-		console.log( `    ${totalItems} items found.` );
-		
-	} catch (err) {
-		
-		console.log( chalk.red("Playlist not found.") );
-		await doQuestion( chalk.cyan("Press enter to exit...") );
-		process.exit();	
-			
-	};
 	
+	if (type === 2) {
+		
+		playlistItems = [playlistId];
+		totalItems = 1;
+		
+	} else {
+	
+		console.log( chalk.yellow("\nGetting playlist items...") );
+		
+		// const playlistId = "PLd-AUhUZLc2lsbl0DOz0CKOv6AS75vfjf"; // fr
+		// const playlistId = "PLd-AUhUZLc2mPtFqzCRQMu5ebO9vRbxZ6"; // colores
+		
+		
+		try {
+			
+			let playlist = await ytpl(playlistId, {
+				limit: limit,
+			});
+			playlistItems = playlist.items;
+			totalItems = playlistItems.length;
+			
+			console.log( `    ${totalItems} items found.` );
+			
+		} catch (err) {
+			
+			console.log( chalk.red("Playlist not found.") );
+			await doQuestion( chalk.green.bold("Press enter to exit...") );
+			process.exit();	
+			
+		};
+	
+	};
 	
 	
 	
@@ -159,55 +191,100 @@ async function doQuestion(question, checkRepeat) {
 	let procesados = 1;
 	let fallados = [];
 	
-	for await (const _x of playlistItems) {
+	
+	
+	if (type === 2) {
 		
-		/*{
-			id: 'X0P23leg5Lw',
-			original_title: 'Alonzo - Assurance vie',
-			title: 'Assurance vie',
-			artist: 'Alonzo',
-			duration: 0,
-			publishedAt: 2019-03-01T21:54:22.000Z
-		}*/
+		const singleVideoId = playlistItems[0];
 		
+		let info = await ytdl.getInfo(singleVideoId);
+		const title = info.videoDetails.title;
 		
-		if (!_x.isPlayable) {
-			console.log( `    [ERR] ${_x.title} is unavailable.` );
-			continue;
-		};
-		
-		
-		const fileName = (_x.title).replace(/[^a-z0-9\-áéíúóàèìòùñ\s.'!¡]/gim, "");
-		const filePath = `${outDir}/${fileName}.mp3`;
+		const fileName = (title).replace(/[^a-z0-9\-áéíúóàèìòùñ\s.'!¡]/gim, "");
+		const filePath = `${outDir}/${fileName}.mp3`;		
 		
 		
 		
-		ytdl(`https://youtube.com/watch?v=${_x.id}`, {
+		ytdl(`https://youtube.com/watch?v=${singleVideoId}`, {
 			filter: "audioonly"
 		})
 		.on("finish", async () => {
-			console.log( `    (${procesados}/${totalItems}) ${_x.title}` );
+			console.log( `    (${procesados}/${totalItems}) ${title}` );
 			procesados ++;
 			
 			if (procesados > totalItems) {
 				if (fallados.length > 0) console.log( chalk.red(`There are ${fallados.length} missing downloads.`) );
 				else console.log( chalk.green("All items have been downloaded") );
 				
-				await doQuestion( chalk.cyan("Press enter to exit...") );
+				await doQuestion( chalk.green.bold("Press enter to exit...") );
 				process.exit();
 				
 			};				
 			
 		})
 		.on("error", err => {
-			// console.log( err );
-			console.log( `    [ERR] (${procesados}/${totalItems}) ${_x.title}` );
-			fallados.push(_x);
+			console.log( err );
+			console.log( `    [ERR] (${procesados}/${totalItems}) ${title}` );
+			fallados.push(singleVideoId);
 			procesados ++;
 			
 		})
-		.pipe(fs.createWriteStream(filePath))
+		.pipe(fs.createWriteStream(filePath));
 		
+	} else {
+		
+		
+		for await (const _x of playlistItems) {
+			
+			/*{
+				id: 'X0P23leg5Lw',
+				original_title: 'Alonzo - Assurance vie',
+				title: 'Assurance vie',
+				artist: 'Alonzo',
+				duration: 0,
+				publishedAt: 2019-03-01T21:54:22.000Z
+			}*/
+			
+			
+			if (!_x.isPlayable) {
+				console.log( `    [ERR] ${_x.title} is unavailable.` );
+				continue;
+			};
+			
+			
+			const fileName = (_x.title).replace(/[^a-z0-9\-áéíúóàèìòùñ\s.'!¡]/gim, "");
+			const filePath = `${outDir}/${fileName}.mp3`;
+			
+			
+			
+			ytdl(`https://youtube.com/watch?v=${_x.id}`, {
+				filter: "audioonly"
+			})
+			.on("finish", async () => {
+				console.log( `    (${procesados}/${totalItems}) ${_x.title}` );
+				procesados ++;
+				
+				if (procesados > totalItems) {
+					if (fallados.length > 0) console.log( chalk.red(`There are ${fallados.length} missing downloads.`) );
+					else console.log( chalk.green("All items have been downloaded") );
+					
+					await doQuestion( chalk.green.bold("Press enter to exit...") );
+					process.exit();
+					
+				};				
+				
+			})
+			.on("error", err => {
+				// console.log( err );
+				console.log( `    [ERR] (${procesados}/${totalItems}) ${_x.title}` );
+				fallados.push(_x);
+				procesados ++;
+				
+			})
+			.pipe(fs.createWriteStream(filePath));
+		
+		};
+	
 	};
 	
 	

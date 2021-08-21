@@ -54,7 +54,8 @@ async function doQuestion(question, checkRepeat) {
      88            88       88        d8'        \`8b   88      .a8P   
      88            88       88       d8'          \`8b  88888888Y"'    
 
-  By: Icaruk
+  (Youtube playlist audio downloader) By: Icaruk
+  
 	`);
 	
 	

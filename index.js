@@ -1,10 +1,10 @@
 
-
 const fs = require("fs");
 const readline = require('readline');
-const ytdl = require('ytdl-core');
 const ytpl = require('ytpl');
 const chalk = require('chalk');
+const processOneItem = require("./utils/processOneItem");
+const cola = require("./utils/cola");
 
 
 
@@ -185,7 +185,7 @@ async function doQuestion(question, checkRepeat) {
 	// ***********************************************************
 	
 	console.log( chalk.yellow("\nDownloading...") );
-	console.log( chalk.magentaBright("Some items could take more time than expected. If it takes too long restart the process.") );
+	console.log( chalk.magentaBright("If the progress bar gets out of sight it will stop updating, but don't worry, the download is still in progress.") );
 	
 	
 	
@@ -197,95 +197,25 @@ async function doQuestion(question, checkRepeat) {
 	if (type === 2) {
 		
 		const singleVideoId = playlistItems[0];
-		
-		let info = await ytdl.getInfo(singleVideoId);
-		const title = info.videoDetails.title;
-		
-		const fileName = (title).replace(/[^a-z0-9\-áéíúóàèìòùñ\s.'!¡]/gim, "");
-		const filePath = `${outDir}/${fileName}.mp3`;		
-		
-		
-		
-		ytdl(`https://youtube.com/watch?v=${singleVideoId}`, {
-			filter: "audioonly"
-		})
-		.on("finish", async () => {
-			console.log( `    (${procesados}/${totalItems}) ${title}` );
-			procesados ++;
-			
-			if (procesados > totalItems) {
-				if (fallados.length > 0) console.log( chalk.red(`There are ${fallados.length} missing downloads.`) );
-				else console.log( chalk.green("All items have been downloaded") );
-				
-				await doQuestion( chalk.green.bold("Press enter to exit...") );
-				process.exit();
-				
-			};				
-			
-		})
-		.on("error", err => {
-			console.log( err );
-			console.log( `    [ERR] (${procesados}/${totalItems}) ${title}` );
-			fallados.push(singleVideoId);
-			procesados ++;
-			
-		})
-		.pipe(fs.createWriteStream(filePath));
+		await processOneItem(singleVideoId, outDir, [1, 1]);
 		
 	} else {
 		
-		
-		for await (const _x of playlistItems) {
-			
-			/*{
-				id: 'X0P23leg5Lw',
-				original_title: 'Alonzo - Assurance vie',
-				title: 'Assurance vie',
-				artist: 'Alonzo',
-				duration: 0,
-				publishedAt: 2019-03-01T21:54:22.000Z
-			}*/
-			
-			
-			if (!_x.isPlayable) {
-				console.log( `    [ERR] ${_x.title} is unavailable.` );
-				continue;
-			};
-			
-			
-			const fileName = (_x.title).replace(/[^a-z0-9\-áéíúóàèìòùñ\s.'!¡]/gim, "");
-			const filePath = `${outDir}/${fileName}.mp3`;
-			
-			
-			
-			ytdl(`https://youtube.com/watch?v=${_x.id}`, {
-				filter: "audioonly"
-			})
-			.on("finish", async () => {
-				console.log( `    (${procesados}/${totalItems}) ${_x.title}` );
-				procesados ++;
-				
-				if (procesados > totalItems) {
-					if (fallados.length > 0) console.log( chalk.red(`There are ${fallados.length} missing downloads.`) );
-					else console.log( chalk.green("All items have been downloaded") );
-					
-					await doQuestion( chalk.green.bold("Press enter to exit...") );
-					process.exit();
-					
-				};				
-				
-			})
-			.on("error", err => {
-				// console.log( err );
-				console.log( `    [ERR] (${procesados}/${totalItems}) ${_x.title}` );
-				fallados.push(_x);
-				procesados ++;
-				
-			})
-			.pipe(fs.createWriteStream(filePath));
-		
+		cola.concurrency = 25;
+		cola.onEnd = async () => {
+			// console.log("All downloads finished.");
+			// await doQuestion( chalk.green.bold("Press enter to exit...") );
+			// process.exit();			
 		};
-	
+		
+		
+		playlistItems.forEach( _item => {
+			cola.items.push( () => processOneItem(_item.id, outDir, [procesados, playlistItems.length]) );
+		});
+		
+		
+		cola.start();
+		
 	};
 	
 	

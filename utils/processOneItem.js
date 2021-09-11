@@ -3,6 +3,12 @@ const chalk = require("chalk");
 const fs = require("fs");
 const ytdl = require('ytdl-core');
 const DraftLog = require('draftlog').into(console)
+const ytcog = require('ytcog');
+const path = require("path");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 
 
@@ -17,7 +23,7 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 		const title = info.videoDetails.title;
 		
 		const fileName = (title).replace(/[^a-z0-9\-áéíúóàèìòùñ\s.'!¡]/gim, "");
-		const filePath = `${outDir}/${fileName}.mp3`;		
+		// const filePath = `${outDir}/${fileName}.mp3`;		
 		
 		
 		
@@ -37,6 +43,8 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 					' '.repeat(50 - units) +
 					chalk.dim(']') +
 					chalk.yellow(` ${progress} % `) +
+					chalk.yellow(`WAIT `) +
+					// chalk.grey(`${arrIdx[0]} / ${arrIdx[1]} `) +
 					chalk.cyan(`${title} `)
 				);
 				
@@ -46,6 +54,8 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 					' '.repeat(50 - units) +
 					chalk.dim(']') +
 					chalk.green(` ${progress} % `) +
+					chalk.green(`OK `) +
+					// chalk.grey(`${arrIdx[0]} / ${arrIdx[1]} `) +
 					chalk.cyan(`${title} `)
 				);
 				
@@ -55,6 +65,8 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 					' '.repeat(50 - units) +
 					chalk.red(']') +
 					chalk.red(` ${progress} % `) +
+					chalk.red(`ERROR `) +
+					// chalk.grey(`${arrIdx[0]} / ${arrIdx[1]} `) +
 					chalk.gray(`${title} `)
 				);
 			};
@@ -63,63 +75,73 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 		
 		
 		const barLine = console.draft("Wait...");
-		let progreso = 0;
-		
-		let lastChunkReceived = Date.now();
-		
-		barLine(ProgressBar(progreso));
+		barLine(ProgressBar(0));
 		
 		
 		
-		const stream = ytdl(`https://youtube.com/watch?v=${singleVideoId}`, {
-			filter: "audioonly"
+		// Download
+		await ytcog.dl({
+			// https://github.com/gatecrasher777/ytcog/wiki/Video#Options
+			id: singleVideoId,
+			path: outDir,
+			filename: fileName,
+			container: "mp4",
+			audioQuality: "highest",
+			videoQuality: "none",
+			progress: (prog, sizeBytes) => {
+				
+				prog = Math.round(prog);
+				
+				if (prog < 100) barLine(ProgressBar(prog));
+				
+			},
+		}).catch( reason => {
+			barLine(ProgressBar(prog, "error"));
+			resolve(false);
 		});
 		
 		
-		stream
-		.on("progress", (chunkLengh, totalBytesDownloadad, totalBytes) => {
+		resolve(true);
+		barLine(ProgressBar(100, "finished"));
+		
+		
+		
+		// Busco el archivo
+		const ourDirFiles = fs.readdirSync(outDir);
+		const file = ourDirFiles.find( _x => _x.startsWith(fileName));
+		
+		
+		
+		// Convert
+		if (file) {
 			
-			progreso = Math.round(totalBytesDownloadad * 100 / totalBytes);
-			
-			// if (progreso > 5) {
-			// 	const dif = Date.now() - lastChunkReceived;
-			// 	if (dif > 4000) return stream.destroy("error");
-			// };
-			
-			// ultimoProgreso = progreso;
-			
-			barLine(ProgressBar(progreso));
-			
-		})
-		.on("finish", async () => {
-			
-			const existe = fs.existsSync(filePath);
-			if (!existe) return processOneItem(...arguments);
-			
-			let valido = fs.statSync(filePath).size > 0;
-			if (!valido) return processOneItem(...arguments);
-			
-			
-			barLine(ProgressBar(progreso, "finished"), chalk.green('OK'))
-			
-			resolve(true);
-			
-		})
-		.on("error", err => {
-			
-			const existe = fs.existsSync(filePath);
-			let valido = existe && fs.statSync(filePath).size > 0;
-			
-			if (existe && valido) return; // falso error
-			if (existe && !valido) {
-				fs.unlinkSync(filePath);
+			try {
+				
+				const route = path.join(outDir, file);
+				let command = ffmpeg(route);
+				
+				command
+				.noVideo()
+				.outputFormat("mp3")
+				.audioCodec("libmp3lame")
+				.audioBitrate(192)
+				.saveToFile( path.join(outDir, `${fileName}.mp3`) )
+				.once("end", () => {
+					
+					if (fs.existsSync(route)) fs.unlinkSync(route);
+					
+					if (arrIdx[0] === arrIdx[1]) {
+						console.log(chalk.greenBright("\n\nProcess ended!\n"));
+					};
+					
+				});
+				
+			} catch (err) {
+				console.log( err );
 			};
 			
-			barLine(ProgressBar(progreso, "error"), chalk.red(`ERROR (ID ${singleVideoId})`))
-			return processOneItem(...arguments);
-			
-		})
-		.pipe(fs.createWriteStream(filePath));
+		};
+		
 		
 	});
 	

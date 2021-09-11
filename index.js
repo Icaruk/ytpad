@@ -213,11 +213,17 @@ async function doQuestion(question, checkRepeat) {
 		};
 		
 		
-		playlistItems.forEach( _item => {
-			cola.items.push( () => processOneItem(_item.id, outDir, [procesados, playlistItems.length]) );
+		// Creo un array de IDs únicas (descarto repes)
+		const arrIds = [...new Set (playlistItems.map( _x => _x.id) )];
+		
+		// Meto a la cola
+		arrIds.forEach( async (_id, _idx) => {
+			
+			cola.items.push( () => processOneItem(_id, outDir, [_idx + 1, arrIds.length]) );
+			// processOneItem(_id, outDir, [_idx + 1, arrIds.length]);
 		});
 		
-		
+		// Inicio
 		cola.start();
 		
 	};

@@ -4,11 +4,13 @@ const fs = require("fs");
 const ytdl = require('ytdl-core');
 const DraftLog = require('draftlog').into(console)
 const ytcog = require('ytcog');
+require("ytcog/lib/dl");
 const path = require("path");
-const ffmpeg = require("fluent-ffmpeg");
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+// const ffmpeg = require("fluent-ffmpeg");
+// const ffmpegPath = require('ffmpeg-static');
+// const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path.replace("app.asar", "app.asar.unpacked");
 
-ffmpeg.setFfmpegPath(ffmpegPath);
+// ffmpeg.setFfmpegPath(ffmpegPath);
 
 
 
@@ -115,7 +117,14 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 		// Convert
 		if (file) {
 			
-			try {
+			const route = path.join(outDir, file);
+			fs.renameSync(route, path.join(outDir, `${fileName}.mp3`))
+			
+			if (arrIdx[0] === arrIdx[1]) {
+				console.log(chalk.greenBright("\n\nProcess ended!\n"));
+			};
+			
+			/*try {
 				
 				const route = path.join(outDir, file);
 				let command = ffmpeg(route);
@@ -138,7 +147,7 @@ function processOneItem(singleVideoId, outDir, arrIdx = [1, 1], intentos = 3) {
 				
 			} catch (err) {
 				console.log( err );
-			};
+			};*/
 			
 		};
 		

@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"pkg": "pkg --targets node14-win --compress Gzip --output build/pkg.exe index.js",
+		"pkg": "pkg --targets node14-win --debug --public --public-packages '*' --compress Gzip --output build/pkg.exe index.js",
 		"postpkg": "node postpkg.js"
 	},
 	"repository": {
@@ -22,6 +22,7 @@
 		"@ffmpeg-installer/ffmpeg": "^1.1.0",
 		"chalk": "^4.1.2",
 		"draftlog": "^1.0.13",
+		"ffmpeg-static": "^4.4.0",
 		"fluent-ffmpeg": "^2.1.2",
 		"ytcog": "^2.0.0",
 		"ytdl-core": "^4.9.1",

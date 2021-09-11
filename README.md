@@ -5,7 +5,7 @@
 🔰 [Click here to download](https://github.com/Icaruk/ytpad/releases/download/2.0.0/ytpad_2.0.0.exe)
 
 
-![](https://i.gyazo.com/9575438e51b9083350d2f1776243d882.mp4)
+![](https://i.gyazo.com/31840e6eb6fdc50e6c27676fb3a912ab.gif)
 
 
 # PERSONAL USE ONLY
